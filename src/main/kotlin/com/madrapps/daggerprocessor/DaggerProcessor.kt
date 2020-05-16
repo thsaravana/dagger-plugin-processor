@@ -1,76 +1,68 @@
 package com.madrapps.daggerprocessor
 
-import javax.annotation.processing.*
+import com.sun.tools.javac.code.Symbol
+import java.io.File
+import javax.annotation.processing.AbstractProcessor
+import javax.annotation.processing.Filer
+import javax.annotation.processing.ProcessingEnvironment
+import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.SourceVersion
-import javax.lang.model.element.ElementKind
 import javax.lang.model.element.TypeElement
-import javax.lang.model.util.Elements
-import javax.tools.*
-
+import javax.tools.StandardLocation.SOURCE_OUTPUT
 
 class DaggerProcessor : AbstractProcessor() {
 
-    lateinit var filer: Filer
-    lateinit var elementUtils: Elements
-    lateinit var messager: Messager
+    private lateinit var filer: Filer
+    private lateinit var projectPath: String
+    private lateinit var testDateFile: File
 
     override fun init(processingEnv: ProcessingEnvironment) {
         super.init(processingEnv)
         filer = processingEnv.filer
-        elementUtils = processingEnv.elementUtils
-        messager = processingEnv.messager
+        val jfo = filer.createSourceFile("TestSample")
+        projectPath = jfo.toUri().path.substringBefore("dagger-plugin") + "dagger-plugin"
+        testDateFile = File(File(projectPath), "src/test/testData")
+        jfo.delete()
     }
 
     override fun process(annotations: MutableSet<out TypeElement>, roundEnv: RoundEnvironment): Boolean {
         roundEnv.getElementsAnnotatedWith(GenerateTest::class.java).forEach { element ->
-            messager.printMessage(Diagnostic.Kind.WARNING, "Processing $element")
-            if (element.kind == ElementKind.CLASS) {
-                val jfo = filer.createSourceFile("TestSample")
-                val writer = jfo.openWriter()
+            if (element is Symbol.ClassSymbol) {
+                val ann: GenerateTest = element.getAnnotation(GenerateTest::class.java)
+                val packageName = element.owner.qualifiedName.toString()
+                val className = element.simpleName.toString()
+                val injectFile = File(testDateFile, ann.directory)
 
-                writer.use {
-                    it.write(
-                        """
-                        import org.junit.Test;
-                        
-                        public class TestSample {
-                        
-                            @Test
-                            public void testSomething() {
-                                assert(true);
-                            }
-                        }
-                    """.trimIndent()
-                    )
+                (injectFile.listFiles() ?: emptyArray()).filterNot { it.name in ann.exclude }.forEach { folder ->
+                    val testClassName = folder.name
+                    val ko = filer.createResource(SOURCE_OUTPUT, packageName, "${testClassName}.kt")
+                    ko.openWriter().use {
+                        it.write(
+                            """
+package $packageName
+
+class $testClassName : $className() {
+${getTestMethods(folder)}
+}
+""".trimIndent()
+                        )
+                    }
                 }
-
-                val jko = filer.createResource(StandardLocation.SOURCE_OUTPUT, "", "SampleKKTest.kt")
-                jko.openWriter().use {
-                    it.write(
-                        """
-                            import org.junit.Test
-
-                            class SampleKKTest {
-
-                                @Test
-                                fun testSomeWhat() {
-                                    assert(true)
-                                }
-                            }
-                        """.trimIndent()
-                    )
-                }
-
             }
         }
         return true
     }
 
-    override fun getSupportedAnnotationTypes(): MutableSet<String> {
-        return mutableSetOf(GenerateTest::class.java.canonicalName)
+    private fun getTestMethods(folder: File): String {
+        val builder = StringBuilder()
+        folder.listFiles()?.forEach { testMethodFile ->
+            builder
+                .append("    ")
+                .append("fun test${testMethodFile.nameWithoutExtension}() = testValidation()").append("\n")
+        }
+        return builder.toString()
     }
 
-    override fun getSupportedSourceVersion(): SourceVersion {
-        return SourceVersion.latestSupported()
-    }
+    override fun getSupportedAnnotationTypes() = mutableSetOf(GenerateTest::class.java.canonicalName)
+    override fun getSupportedSourceVersion(): SourceVersion = SourceVersion.latestSupported()
 }
