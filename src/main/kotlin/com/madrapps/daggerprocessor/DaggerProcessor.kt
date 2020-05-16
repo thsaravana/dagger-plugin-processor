@@ -5,7 +5,7 @@ import javax.lang.model.SourceVersion
 import javax.lang.model.element.ElementKind
 import javax.lang.model.element.TypeElement
 import javax.lang.model.util.Elements
-import javax.tools.Diagnostic
+import javax.tools.*
 
 
 class DaggerProcessor : AbstractProcessor() {
@@ -29,7 +29,8 @@ class DaggerProcessor : AbstractProcessor() {
                 val writer = jfo.openWriter()
 
                 writer.use {
-                    it.write("""
+                    it.write(
+                        """
                         import org.junit.Test;
                         
                         public class TestSample {
@@ -39,7 +40,25 @@ class DaggerProcessor : AbstractProcessor() {
                                 assert(true);
                             }
                         }
-                    """.trimIndent())
+                    """.trimIndent()
+                    )
+                }
+
+                val jko = filer.createResource(StandardLocation.SOURCE_OUTPUT, "", "SampleKKTest.kt")
+                jko.openWriter().use {
+                    it.write(
+                        """
+                            import org.junit.Test
+
+                            class SampleKKTest {
+
+                                @Test
+                                fun testSomeWhat() {
+                                    assert(true)
+                                }
+                            }
+                        """.trimIndent()
+                    )
                 }
 
             }
