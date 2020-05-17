@@ -1,6 +1,5 @@
 # dagger-plugin-processor
-Annotation processor to help with the <a href="https://github.com/Madrapps/dagger-plugin">dagger-plugin</a> project. This project is
-to be used exclusively on 
+Annotation processor to help with the <a href="https://github.com/Madrapps/dagger-plugin">dagger-plugin</a> project. This project is to be used exclusively with `dagger-plugin` project.
 
 Spec
 -----
