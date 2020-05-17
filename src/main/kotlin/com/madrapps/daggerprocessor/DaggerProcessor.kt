@@ -20,7 +20,7 @@ class DaggerProcessor : AbstractProcessor() {
         super.init(processingEnv)
         filer = processingEnv.filer
         val jfo = filer.createSourceFile("TestSample")
-        projectPath = jfo.toUri().path.substringBefore("dagger-plugin") + "dagger-plugin"
+        projectPath = jfo.toUri().path.substringBeforeLast("build")
         testDateFile = File(File(projectPath), "src/test/testData")
         jfo.delete()
     }
