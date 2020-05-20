@@ -29,7 +29,7 @@ class DaggerProcessor : AbstractProcessor() {
         roundEnv.getElementsAnnotatedWith(GenerateTest::class.java).forEach { element ->
             if (element is Symbol.ClassSymbol) {
                 val ann: GenerateTest = element.getAnnotation(GenerateTest::class.java)
-                val packageName = element.owner.qualifiedName.toString()
+                val packageName = element.owner.qualifiedName.toString() + "." + ann.directory
                 val className = element.simpleName.toString()
                 val injectFile = File(testDateFile, ann.directory)
 
@@ -40,6 +40,8 @@ class DaggerProcessor : AbstractProcessor() {
                         it.write(
                             """
 package $packageName
+
+import com.madrapps.dagger.$className
 
 class $testClassName : $className() {
 ${getTestMethods(folder)}
