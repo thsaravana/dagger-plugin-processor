@@ -35,7 +35,9 @@ testData
 
 The above config will generate the following Test files under `build/generated/source/kapt/test/...` directory:
 ```
-package com.madrapps.dagger
+package com.madrapps.dagger.inject
+
+import com.madrapps.dagger.InjectTestCase
 
 class AbstractClass : InjectTestCase() {
     fun testKFailureComponent() = testValidation()
@@ -45,7 +47,9 @@ class AbstractClass : InjectTestCase() {
 }
 ```
 ```
-package com.madrapps.dagger
+package com.madrapps.dagger.inject
+
+import com.madrapps.dagger.InjectTestCase
 
 class FinalFields : InjectTestCase() {
     fun testClassWithFinalField() = testValidation()
